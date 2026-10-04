@@ -1,0 +1,3 @@
+# Keep the personal deployment Tailscale-only
+
+The operator explicitly prioritizes access only within their Tailscale network. Reuse the existing private Traefik routing and a DNS-only Cloudflare subdomain of `thealexferrari.com`; do not introduce public listeners, Funnel, or Tunnel routes for this installation. This preserves the network boundary at the cost of requiring a player that fetches from a device within the permitted network; AntennaPod is accepted as the example player. The application emits standard podcast RSS and remains configurable for others' hosting environments. This is a deployment boundary, not a proprietary feed protocol.

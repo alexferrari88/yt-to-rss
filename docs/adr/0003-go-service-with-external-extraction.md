@@ -1,0 +1,3 @@
+# Use Go for the service and invoke external extraction tools
+
+The operator selected Go to keep the persistent service and CLI lightweight. Use Go for submission handling, durable state, RSS/media serving, and management; invoke yt-dlp and FFmpeg only while processing a video. Go's standard library covers HTTP file serving, XML, and subprocess control, while the maintained extractor handles YouTube's changing behavior. This avoids a persistent Python daemon and a custom YouTube extractor, but retains yt-dlp's Python/runtime prerequisites during jobs; measure service memory and complete processing memory separately rather than promising an untested bound.
