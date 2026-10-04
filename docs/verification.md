@@ -66,11 +66,11 @@ The actual Go application's CLI retry of the failed bot submission published on 
 | Go process after publication | 24.6 MiB | Same process immediately after publication. |
 | Peak container during retry | 236.9 MiB | Reset owned cgroup v2 `memory.peak`; includes the daemon, extraction tools, CLI sampling and charged filesystem page cache. |
 
-The 512 MiB ceiling was retained. These measurements describe this workload and measurement window. Phone reply receipt remains unverified: a CLI retry after a final bot failure does not reattach its publication notification. Resharing the published source through the bot returns its status without creating a duplicate episode.
+The 512 MiB ceiling was retained. These measurements describe this workload and measurement window. The operator confirmed receiving the bot's Published reply for this source on 2026-10-04. Receipt of the earlier queued/failure replies remains unconfirmed. A CLI retry after a final bot failure does not reattach its publication notification; resharing the published source through the bot returns its status without creating a duplicate episode.
 
 ## Remaining live acceptance
 
-- Dedicated Telegram configuration was saved through the protected helper and activated by recreating only this service. Official identity/webhook checks passed. A new real bot submission was durably accepted, exhausted three direct extraction attempts, then published through the configured application after the authorized proxy change and CLI retry. Operator confirmation of actual queued/failure/publication replies remains pending; configured identity, server acceptance and publication do not establish delivery to the phone.
+- Dedicated Telegram configuration was saved through the protected helper and activated by recreating only this service. Official identity/webhook checks passed. A new real bot submission was durably accepted, exhausted three direct extraction attempts, then published through the configured application after the authorized proxy change and CLI retry. The operator confirmed Published reply receipt; receipt of the earlier queued/failure replies remains unconfirmed.
 - Android/AntennaPod subscription, refresh, download, playback and seeking require operator/device confirmation with Tailscale connected. The feed is standard and player-independent.
 - A negative request with a valid read URL from an independent outside-tailnet network remains untested. Current DNS/listener/Serve evidence verifies private configuration; successful on-server tailnet HTTP checks do not establish this external result. On the phone, verify fresh retrieval fails with Tailscale disconnected and succeeds when connected; cached/downloaded audio is not a network test.
 
