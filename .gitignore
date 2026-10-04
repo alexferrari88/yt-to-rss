@@ -5,4 +5,8 @@
 /bin/
 /dist/
 /coverage.out
+/compose.local.yaml
+__pycache__/
+*.py[cod]
 .agents/skills/
+.claude/

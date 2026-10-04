@@ -1,0 +1,40 @@
+services:
+  2pod:
+    image: ${TWOPOD_IMAGE:-yt-to-rss:local}
+    build: .
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    environment:
+      TWOPOD_STATE_DIR: /data
+      TWOPOD_LISTEN: 0.0.0.0:8080
+      TWOPOD_BASE_URL: ${TWOPOD_BASE_URL:-http://localhost:8080}
+      TWOPOD_FEED_TITLE: ${TWOPOD_FEED_TITLE:-My YouTube audio}
+      TWOPOD_FEED_DESCRIPTION: ${TWOPOD_FEED_DESCRIPTION:-Selected YouTube videos as audio episodes}
+      TWOPOD_FEED_LINK: ${TWOPOD_FEED_LINK:-${TWOPOD_BASE_URL:-http://localhost:8080}}
+      TWOPOD_READ_TOKEN: ${TWOPOD_READ_TOKEN:-}
+      TWOPOD_PROCESS_TIMEOUT: ${TWOPOD_PROCESS_TIMEOUT:-2h}
+      TWOPOD_MAX_ATTEMPTS: ${TWOPOD_MAX_ATTEMPTS:-3}
+      TWOPOD_RETRY_DELAY: ${TWOPOD_RETRY_DELAY:-1m}
+      TWOPOD_RETENTION: ${TWOPOD_RETENTION:-720h}
+      TWOPOD_STORAGE_LIMIT_BYTES: ${TWOPOD_STORAGE_LIMIT_BYTES:-10737418240}
+      TWOPOD_MIN_FREE_BYTES: ${TWOPOD_MIN_FREE_BYTES:-536870912}
+      TWOPOD_POLL_INTERVAL: ${TWOPOD_POLL_INTERVAL:-1s}
+      TWOPOD_TELEGRAM_BOT_TOKEN: ${TWOPOD_TELEGRAM_BOT_TOKEN:-}
+      TWOPOD_TELEGRAM_OPERATOR_ID: ${TWOPOD_TELEGRAM_OPERATOR_ID:-}
+    volumes:
+      - state:/data
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    # No host port is published. Attach your proxy with a local override;
+    # docs/operations.md also shows an opt-in localhost-only port mapping.
+
+volumes:
+  state:
