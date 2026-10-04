@@ -18,18 +18,13 @@ Implement, verify, privately deploy and publish the approved service. The user i
 
 ## Last verified facts
 
-- AntennaPod's official docs establish direct feed fetching; phone playback is untested.
-- Existing private Traefik/DNS/TLS convention is reusable. Extraction prerequisites exist, but a current yt-dlp must be tested and RAM measured.
-- Git is initialized on main with the confirmed planning baseline 7c66bfa and implementation snapshot eb9291e committed. Independent code review is complete; two validated P2 fixes are resolved and the final application gates pass.
-- Canonical implementation spec: .scratch/initial-service/spec.md, Status: ready-for-agent. It contains 44 user stories, implementation/testing decisions, accepted scope, and separate live acceptance requirements.
-- Six tickets are published under .scratch/initial-service/issues/, all ready-for-agent, with acceptance criteria and the approved blockers. The parent spec remains unchanged.
-- Rootless Docker and private proxy/Serve routes are available; the GitHub repository does not yet exist. Preserve unrelated dirty work in the services checkout.
-- Current nightly yt-dlp/EJS/Deno successfully extracted the complete 213-second official public Rick Astley video without cookies or a proxy; decoded MP3 verification passed. The earlier short source failed with a source-specific provider bot check. Application/container extraction and processing-memory measurements remain to be verified.
-- Dedicated Telegram credentials/operator configuration are absent. A setup preference question is pending; tokens must be entered into protected server configuration, not chat. Android playback remains a required operator/device check.
-- Application implementation is stable: 14 core CLI/HTTP tests and four Telegram boundary tests pass; typechecking/vet passes. Packaged CLI/HTTP, container replacement and stopped-volume backup/restore checks passed using a controlled external extractor fixture. Linux-specific process/file limits and possible brief aggregate-budget overshoot are documented.
-- Created the approved DNS-only A record for 2pod.thealexferrari.com to the Tailscale address. Prepared /opt/services/yt-to-rss private Compose/runbook and scoped inventory commands; Compose validates, protected .env is ignored, no container or public listener activated yet. Unrelated services WIP is preserved.
-- Secure setup helper is ready: scripts/configure-telegram.py accepts a hidden token and nonce private-message identity check into /opt/services/yt-to-rss/.env. The operator has been asked to run it and reply ready; continue independent work meanwhile.
-- Independent standards/spec review findings are resolved: inherited application settings are stripped from tests, decoded MP3 completeness is validated, and availability logic is shared. The full suite passed in 54.967s with both daemon and tests race-instrumented; go vet ./... passed. Core/Telegram/resource tickets 01–04 are resolved; live bot acceptance remains in ticket 06.
+- Main contains baseline 7c66bfa, implementation eb9291e and reviewed fixes 2ae45c8. Independent standards/spec findings are resolved; the full acceptance suite passed in 54.967s with both daemon and tests race-instrumented, and go vet ./... passed.
+- Tickets 01–05 are resolved. The final rootless image passed exact CLI/RSS/media fixture checks, container replacement, generated-token persistence and whole stopped-state backup/restore; its isolated resources were cleaned.
+- Personal service is healthy under /opt/services/yt-to-rss, source revision 2ae45c8880b3ee81fd7b055f069f496917ee14a0, UID10001, persistent 2pod-state, one CPU/512 MiB ceiling, no host ports, existing private Traefik. Approved DNS-only hostname resolves to the Tailscale address; trusted HTTPS, secret rejection and GET/HEAD/ranges pass through it.
+- All existing Serve routes were preserved; Traefik remains loopback-bound and port 443 tailnet-bound. Rootless Docker/user lingering are active. Hister/Taste private HTTPS remain healthy. Scoped infrastructure/configuration commit 5a31272 is saved locally in /opt/services; unrelated WIP is preserved and the services repository was not pushed.
+- Packaged real 213s public YouTube conversion published first attempt in 9.61s; complete 3,744,644-byte MP3 downloaded/decoded independently without errors. Idle Go RSS 11.5 MiB, postconversion 13.5 MiB, peak total container 364.2 MiB including extractor tools/probes/CLI sampling/page cache. Earlier isolated short-video source hit a provider bot check; no cookie/proxy change was needed for the successful source.
+- Public MIT repository created/pushed at https://github.com/alexferrari88/yt-to-rss. Final evidence/status documentation is ready for commit/push; verify local and remote parity in the handoff.
+- Dedicated Telegram credentials remain absent; safe interactive helper is ready and operator setup question is pending. Phone playback and independent outside-tailnet negative access are also pending; ticket 06 needs-info, not complete. No credential or secret URL is stored in tracked docs; subscription is in protected /opt/services/yt-to-rss/subscription.txt.
 
 ## Approved tickets
 
@@ -42,4 +37,4 @@ Implement, verify, privately deploy and publish the approved service. The user i
 
 ## Next action
 
-Build the reviewed revision and repeat package replacement/backup/restore acceptance. Activate only the new private service, measure real processing and publish the source repository. Telegram setup and Android playback remain explicit operator-dependent acceptance; continue all independently possible work meanwhile.
+Operator next action: run scripts/configure-telegram.py against /opt/services/yt-to-rss/.env in an interactive terminal and reply ready. Then recreate only 2pod and verify real Telegram submission/replies plus Android playback and outside-tailnet access. Tickets 01–05 are done; ticket 06 remains open for these explicit operator/device results.
