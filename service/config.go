@@ -12,10 +12,10 @@ import (
 )
 
 type Config struct {
-	StateDir, Listen, BaseURL, FeedTitle, FeedDescription, FeedLink, ReadToken, Extractor, FFmpegLocation string
-	ProcessTimeout, RetryDelay, Retention, PollInterval                                                   time.Duration
-	MaxAttempts                                                                                           int
-	StorageLimitBytes, MinFreeBytes                                                                       int64
+	StateDir, Listen, BaseURL, FeedTitle, FeedDescription, FeedLink, ReadToken, Extractor, FFmpegLocation, ExtractorProxy string
+	ProcessTimeout, RetryDelay, Retention, PollInterval                                                                   time.Duration
+	MaxAttempts                                                                                                           int
+	StorageLimitBytes, MinFreeBytes                                                                                       int64
 }
 
 func ConfigFromEnv() (Config, error) {
@@ -25,9 +25,20 @@ func ConfigFromEnv() (Config, error) {
 		}
 		return fallback
 	}
-	c := Config{StateDir: get("STATE_DIR", "./data"), Listen: get("LISTEN", "127.0.0.1:8080"), FeedTitle: get("FEED_TITLE", "2pod"), FeedDescription: get("FEED_DESCRIPTION", "Selected YouTube audio"), ReadToken: get("READ_TOKEN", ""), Extractor: get("EXTRACTOR", "yt-dlp"), FFmpegLocation: get("FFMPEG_LOCATION", "")}
+	c := Config{StateDir: get("STATE_DIR", "./data"), Listen: get("LISTEN", "127.0.0.1:8080"), FeedTitle: get("FEED_TITLE", "2pod"), FeedDescription: get("FEED_DESCRIPTION", "Selected YouTube audio"), ReadToken: get("READ_TOKEN", ""), Extractor: get("EXTRACTOR", "yt-dlp"), FFmpegLocation: get("FFMPEG_LOCATION", ""), ExtractorProxy: get("EXTRACTOR_PROXY", "")}
 	c.BaseURL = strings.TrimRight(get("BASE_URL", "http://"+c.Listen), "/")
 	c.FeedLink = get("FEED_LINK", c.BaseURL)
+	if c.ExtractorProxy != "" {
+		u, err := url.Parse(c.ExtractorProxy)
+		valid := err == nil && u.Hostname() != "" && (u.Scheme == "http" || u.Scheme == "https") && (u.Path == "" || u.Path == "/") && u.RawQuery == "" && !u.ForceQuery && u.Fragment == "" && !strings.HasSuffix(u.Host, ":")
+		if valid && u.Port() != "" {
+			port, err := strconv.Atoi(u.Port())
+			valid = err == nil && port > 0 && port <= 65535
+		}
+		if !valid {
+			return c, fmt.Errorf("TWOPOD_EXTRACTOR_PROXY must be an HTTP(S) proxy URL with a valid host/port and no path, query or fragment")
+		}
+	}
 	var err error
 	for _, option := range []struct {
 		key, value string

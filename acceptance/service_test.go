@@ -788,3 +788,90 @@ func TestPartialMP3SuccessNeverPublishes(t *testing.T) {
 	full := h.add("https://youtu.be/zyxwvutsrqp")
 	h.wait(full.ID, "published")
 }
+
+func TestExtractorProxyIsOptionalAndPassedOnlyInChildEnvironment(t *testing.T) {
+	for _, proxy := range []string{"", "http://operator:proxy-password@127.0.0.1:8899"} {
+		name := "direct"
+		if proxy != "" {
+			name = "configured"
+		}
+		t.Run(name, func(t *testing.T) {
+			settings := []string{"TWOPOD_EXTRACTOR_PROXY=" + proxy, "FIXTURE_EXPECT_PROXY=" + proxy, "TWOPOD_MAX_ATTEMPTS=1", "http_proxy=", "https_proxy=", "HTTP_PROXY=", "HTTPS_PROXY=", "no_proxy=", "NO_PROXY="}
+			if proxy != "" {
+				settings = append(settings, "http_proxy=http://inherited.invalid:8888", "https_proxy=http://inherited.invalid:8888", "HTTP_PROXY=http://inherited.invalid:8888", "HTTPS_PROXY=http://inherited.invalid:8888", "no_proxy=youtube.com", "NO_PROXY=youtube.com")
+			}
+			h := newHarness(t, settings...)
+			s := h.add("https://youtu.be/abcdefghijk")
+			h.wait(s.ID, "published")
+			rss, _ := h.feed()
+			if len(rss.Channel.Items) != 1 {
+				t.Fatal("proxy-aware extractor did not publish")
+			}
+			r, err := http.Get(rss.Channel.Items[0].Enclosure.URL)
+			if err != nil {
+				t.Fatal(err)
+			}
+			audio, _ := io.ReadAll(r.Body)
+			r.Body.Close()
+			fixture, _ := os.ReadFile("testdata/tone.mp3")
+			if !bytes.Equal(audio, fixture) {
+				t.Fatal("proxy-aware publication audio changed")
+			}
+			if strings.Contains(string(h.run("list")), "proxy-password") {
+				t.Fatal("proxy credentials leaked to command output")
+			}
+			h.stop()
+			if strings.Contains(h.log.String(), "proxy-password") {
+				t.Fatal("proxy credentials leaked to daemon logs")
+			}
+		})
+	}
+}
+
+func TestInvalidExtractorProxyIsRejectedWithoutCredentialDisclosure(t *testing.T) {
+	for _, proxy := range []string{"http://operator:proxy-password@/", "http://operator:proxy-password@proxy.invalid:70000", "ftp://operator:proxy-password@proxy.invalid", "http://operator:proxy-password@proxy.invalid/path", "http://operator:proxy-password@proxy.invalid?token=secret", "http://operator:proxy-password@proxy.invalid#secret"} {
+		cmd := exec.Command(binary, "list")
+		for _, setting := range os.Environ() {
+			if !strings.HasPrefix(setting, "TWOPOD_") {
+				cmd.Env = append(cmd.Env, setting)
+			}
+		}
+		cmd.Env = append(cmd.Env, "TWOPOD_EXTRACTOR_PROXY="+proxy)
+		out, err := cmd.CombinedOutput()
+		if err == nil || !strings.Contains(string(out), "TWOPOD_EXTRACTOR_PROXY") {
+			t.Fatalf("invalid proxy did not produce configuration error: %s", out)
+		}
+		if strings.Contains(string(out), "proxy-password") || strings.Contains(string(out), "secret") {
+			t.Fatal("invalid proxy credentials leaked")
+		}
+	}
+}
+
+func TestYouTubeBotChallengeHasSanitizedActionableFailure(t *testing.T) {
+	h := newHarness(t, "TWOPOD_MAX_ATTEMPTS=1")
+	os.WriteFile(filepath.Join(h.dir, "mode-abcdefghijk"), []byte("botchallenge"), 0600)
+	s := h.add("https://youtu.be/abcdefghijk")
+	s = h.wait(s.ID, "failed")
+	if s.Failure != "YouTube blocked automated access from this network; configure an extraction proxy or retry later." {
+		t.Fatalf("bot challenge diagnosis: %s", s.Failure)
+	}
+	if strings.Contains(string(h.run("list")), "proxy-password") {
+		t.Fatal("extractor credentials leaked to command output")
+	}
+	rss, _ := h.feed()
+	if len(rss.Channel.Items) != 0 {
+		t.Fatal("blocked source entered feed")
+	}
+	r, err := http.Get(h.base + "/" + strings.Repeat("s", 40) + "/media/" + s.ID + ".mp3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Body.Close()
+	if r.StatusCode != 404 {
+		t.Fatal("blocked source offered media")
+	}
+	h.stop()
+	if strings.Contains(h.log.String(), "proxy-password") {
+		t.Fatal("extractor credentials leaked to logs")
+	}
+}

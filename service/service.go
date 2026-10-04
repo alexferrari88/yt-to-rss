@@ -500,6 +500,20 @@ func (s *Service) extract(ctx context.Context, v Submission) {
 		return
 	}
 	cmd := childCommand(processCtx, executable, token, append([]string{"_extract-worker", strconv.FormatInt(fileLimit, 10), s.cfg.Extractor}, args...)...)
+	diagnostic := &cappedBuffer{limit: 8192}
+	cmd.Stderr = diagnostic
+	if s.cfg.ExtractorProxy != "" {
+		var env []string
+		for _, setting := range cmd.Env {
+			key, _, _ := strings.Cut(setting, "=")
+			switch strings.ToLower(key) {
+			case "http_proxy", "https_proxy", "all_proxy", "no_proxy":
+				continue
+			}
+			env = append(env, setting)
+		}
+		cmd.Env = append(env, "http_proxy="+s.cfg.ExtractorProxy, "https_proxy="+s.cfg.ExtractorProxy, "HTTP_PROXY="+s.cfg.ExtractorProxy, "HTTPS_PROXY="+s.cfg.ExtractorProxy, "no_proxy=", "NO_PROXY=")
+	}
 	stopMonitor := make(chan struct{})
 	monitorDone := make(chan storageStop, 1)
 	go s.monitorStorage(processCtx, cancel, work, stopMonitor, monitorDone)
@@ -518,6 +532,8 @@ func (s *Service) extract(ctx context.Context, v Submission) {
 		reason := "Extraction failed; check yt-dlp/FFmpeg updates and YouTube availability, then retry."
 		if errors.Is(processCtx.Err(), context.DeadlineExceeded) {
 			reason = "Processing timed out; check the video length and processing timeout, then retry."
+		} else if message := strings.ToLower(diagnostic.String()); strings.Contains(message, "sign in to confirm") && strings.Contains(message, "not a bot") {
+			reason = "YouTube blocked automated access from this network; configure an extraction proxy or retry later."
 		}
 		s.finishFailure(v, reason)
 		return

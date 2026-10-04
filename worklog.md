@@ -2,7 +2,7 @@
 
 ## Current goal
 
-Implement, verify, privately deploy and publish the approved service. The user invoked implement and explicitly requested gpt-6.1-sol subagents at high reasoning effort. Implementation is underway on main from baseline 7c66bfab33e627b5d812491eebffdd38718e2dbe.
+Implement, verify, privately deploy and publish the approved service. The user invoked implement and explicitly requested gpt-6.1-sol subagents at high reasoning effort. Core implementation and release are complete. Finish real Telegram/device acceptance and resolve the source-specific direct YouTube route block without adding unnecessary infrastructure.
 
 ## Settled
 
@@ -10,8 +10,8 @@ Implement, verify, privately deploy and publish the approved service. The user i
 - Standard podcast RSS; no particular player dependency. User explicitly says Pocket Casts is unnecessary and accepts AntennaPod for private-feed use.
 - Full-video MP3, active-source deduplication, bounded retries plus CLI retry, one conversion at a time, automatic expiry 30 days after publication, pause when storage is full, secret read URLs.
 - Tailscale-only installation using existing Traefik and DNS-only Cloudflare subdomain under thealexferrari.com. No public Funnel/Tunnel/listener. ADR-0001 and ADR-0002 record access decisions.
-- Go service/CLI and hostname 2pod.thealexferrari.com. ADR-0003 records Go with on-demand yt-dlp/FFmpeg extraction; SQLite is the proposed durable-state implementation.
-- Public alexferrari88/yt-to-rss repository, MIT, Docker Compose. Read-only GitHub checks found no matching accessible repo yet.
+- Go service/CLI and hostname 2pod.thealexferrari.com. ADR-0003 records Go with on-demand yt-dlp/FFmpeg extraction; SQLite provides durable state.
+- Public alexferrari88/yt-to-rss repository, MIT, Docker Compose. The repository is published.
 - The complete design is confirmed; do not ask for the same design or implementation authorization again.
 - The operator explicitly confirmed application-level testing through CLI/bot commands and RSS/media HTTP, replacing only external YouTube/Telegram traffic in automated tests. Do not ask for those boundaries again.
 - The six-ticket breakdown and dependency structure are approved. Do not request approval of the same breakdown again.
@@ -24,7 +24,11 @@ Implement, verify, privately deploy and publish the approved service. The user i
 - All existing Serve routes were preserved; Traefik remains loopback-bound and port 443 tailnet-bound. Rootless Docker/user lingering are active. Hister/Taste private HTTPS remain healthy. Scoped infrastructure/configuration commit 5a31272 is saved locally in /opt/services; unrelated WIP is preserved and the services repository was not pushed.
 - Packaged real 213s public YouTube conversion published first attempt in 9.61s; complete 3,744,644-byte MP3 downloaded/decoded independently without errors. Idle Go RSS 11.5 MiB, postconversion 13.5 MiB, peak total container 364.2 MiB including extractor tools/probes/CLI sampling/page cache. Earlier isolated short-video source hit a provider bot check; no cookie/proxy change was needed for the successful source.
 - Public MIT repository created/pushed at https://github.com/alexferrari88/yt-to-rss. Source and final evidence/status documentation are committed and pushed; local/tracking/remote main parity was verified. The source checkout is clean and runtime source matches the final published code.
-- Dedicated Telegram credentials remain absent; safe interactive helper is ready and operator setup question is pending. Phone playback and independent outside-tailnet negative access are also pending; ticket 06 needs-info, not complete. No credential or secret URL is stored in tracked docs; subscription is in protected /opt/services/yt-to-rss/subscription.txt.
+- Operator completed the protected Telegram helper. Official bot identity is valid and no webhook conflicts with polling. Recreated only 2pod with its new credentials; healthy, generated feed URL and published audio retained, private HTTPS and all Serve routes preserved. No secrets are stored in tracked docs; subscription is in protected /opt/services/yt-to-rss/subscription.txt.
+
+- A new real operator submission was accepted through Telegram, then reached final failure after three attempts. The same-source isolated metadata probe reproduces YouTube bot-signin on the server direct route in 2.16s; known public control still succeeds, three alternate clients fail, and pinned nightly is current/master identical. The same source is public/non-live and succeeds through the existing private Beelink proxy in 3.33s. No production extraction route changed.
+- Preparing an optional child-only extraction proxy setting (default disabled), public-boundary tests and a fixed sanitized bot-challenge diagnostic. Isolated full same-source conversion through the existing proxy passed: 40,237,820-byte MP3, decoded 3,660.504s, full decode clean, 63.33s elapsed; temporary container removed. Enabling it would add Beelink as an availability dependency; obtain that operator preference after presenting verified conversion/gates.
+- Actual queued/failure reply confirmation, Android playback and independent outside-tailnet access remain pending. An operator reply question is open; ticket 06 is still needs-info.
 
 ## Approved tickets
 
@@ -37,4 +41,4 @@ Implement, verify, privately deploy and publish the approved service. The user i
 
 ## Next action
 
-Operator next action: run scripts/configure-telegram.py against /opt/services/yt-to-rss/.env in an interactive terminal and reply ready. Then recreate only 2pod and verify real Telegram submission/replies plus Android playback and outside-tailnet access. Tickets 01–05 are done; ticket 06 remains open for these explicit operator/device results.
+Verify complete same-source conversion with the existing proxy, finish TDD/review/package gates for the minimal optional setting, and present the Beelink availability tradeoff before activation. Confirm actual bot replies, then Android feed refresh/download/play/seek and the external negative access check.

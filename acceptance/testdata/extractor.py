@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 import json, os, pathlib, shutil, sys, time, subprocess
 args=sys.argv[1:]
+if 'FIXTURE_EXPECT_PROXY' in os.environ:
+    expected=os.environ['FIXTURE_EXPECT_PROXY']
+    assert all(os.environ.get(name,'')==expected for name in ('http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY'))
+    assert '--proxy' not in args
+    assert not expected or all(expected not in argument for argument in args)
+    if expected:
+        assert os.environ.get('no_proxy','')=='' and os.environ.get('NO_PROXY','')==''
 assert '--no-playlist' in args and '--ignore-config' in args
 assert args[-1].startswith('https://www.youtube.com/watch?v=') and '&' not in args[-1]
 output=args[args.index('-o')+1]
@@ -19,6 +26,9 @@ while mode=='wait' and mode_file.exists():
 if mode=='fail':
     (target.parent/'partial.download').write_bytes(b'incomplete audio')
     print('provider secret password https://secret.example/credential',file=sys.stderr)
+    sys.exit(1)
+if mode=='botchallenge':
+    print("ERROR: Sign in to confirm you're not a bot. http://operator:proxy-password@invalid.example/credential",file=sys.stderr)
     sys.exit(1)
 if mode=='grow':
     with (target.parent/'partial.download').open('wb') as working:

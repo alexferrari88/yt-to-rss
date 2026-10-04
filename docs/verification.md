@@ -46,9 +46,19 @@ The personal container has a 512 MiB memory ceiling and one CPU. This is one mea
 
 An earlier separate short public video hit YouTube's bot-confirmation check. The official 213-second source passed both an isolated tool probe and the final application/container path. Provider availability can differ by source; retry behavior and actionable operator diagnostics are implemented.
 
+## Telegram activation and provider diagnosis
+
+After the operator saved dedicated Telegram settings with the protected helper, official bot identity and the absence of a webhook were verified. Only 2pod was recreated. The healthy service loaded its settings and retained the generated subscription URL, published media, trusted private HTTPS and all existing Serve routes. A new real Telegram submission was accepted into the durable queue. Confirmation that the phone received its queued/failure messages is still pending.
+
+The new public, non-live source (3,661 seconds) failed all three direct extraction attempts with a YouTube bot-signin challenge. An isolated metadata probe reproduced that failure in 2.16 seconds. The known 213-second control still worked on the direct route. Web Safari, mobile web and TV client probes returned the same challenge for the new source. Official release metadata confirmed the pinned nightly was current; no newer release was available to fix this behavior.
+
+Changing only the extraction route to the operator's existing residential proxy made the same source available. A complete isolated conversion using the packaged tools and child-only proxy environment produced a 40,237,820-byte MP3 in 63.33 seconds; decoded duration was 3,660.504 seconds, consistent with rounded source metadata. Independent full decoding passed. The isolated container published no port and was removed afterwards. No browser cookies or login credentials were used.
+
+An optional `TWOPOD_EXTRACTOR_PROXY` setting and fixed sanitized bot-challenge diagnostic are being verified. The setting defaults empty; enabling it adds proxy availability as a dependency of extraction. The personal deployment's production extraction route remains direct pending the operator's Beelink availability preference. This complete tool probe does not establish successful publication/replies from the final configured application.
+
 ## Remaining live acceptance
 
-- Dedicated Telegram configuration is still absent. Automated bot acceptance passes; actual operator submission and queued/published/failure delivery have not been verified. Use the protected interactive setup helper, then recreate only this service.
+- Dedicated Telegram configuration was saved through the protected helper and activated by recreating only this service. Official identity/webhook checks passed; the container is healthy and retained its generated read URL and published episode. A new real bot submission was durably accepted and exhausted three extraction attempts because YouTube challenged this server for that source. Operator confirmation of actual replies remains pending; configured identity and server acceptance do not establish delivery to the phone.
 - Android/AntennaPod subscription, refresh, download, playback and seeking require operator/device confirmation with Tailscale connected. The feed is standard and player-independent.
 - A negative request with a valid read URL from an independent outside-tailnet network remains untested. Current DNS/listener/Serve evidence verifies private configuration; successful on-server tailnet HTTP checks do not establish this external result. On the phone, verify fresh retrieval fails with Tailscale disconnected and succeeds when connected; cached/downloaded audio is not a network test.
 

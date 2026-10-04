@@ -18,6 +18,7 @@ Compose reads `.env` next to `compose.yaml`, or the file selected by `docker com
 | `TWOPOD_MAX_ATTEMPTS` | `3` | Bounded automatic extraction attempts. |
 | `TWOPOD_RETRY_DELAY` | `1m` | Delay between automatic attempts. |
 | `TWOPOD_POLL_INTERVAL` | `1s` | Worker polling interval. |
+| `TWOPOD_EXTRACTOR_PROXY` | Empty | Optional HTTP(S) outbound proxy for extraction subprocesses only. |
 | `TWOPOD_TELEGRAM_BOT_TOKEN` | Empty | Optional bot credential. |
 | `TWOPOD_TELEGRAM_OPERATOR_ID` | Empty | Numeric Telegram user ID permitted to submit. |
 | `TWOPOD_IMAGE` | `yt-to-rss:local` | Image name, also used to select a saved rollback image. |
@@ -27,6 +28,8 @@ Durations use Go notation such as `30m`, `2h`, or `720h`, not `30d`. Recreate th
 Storage accounting includes published media, metadata and extraction working files. The aggregate budget and free-space reserve are checked during processing at `TWOPOD_POLL_INTERVAL` (default one second). Multiple working files can grow between checks and briefly exceed the aggregate budget; these settings are polling thresholds rather than a filesystem quota or an exact total-byte cap. Linux child processes have a per-file size cap based on the available budget. Keep enough filesystem headroom for growth between checks when choosing the reserve.
 
 When a storage check fails, processing is cancelled and the submission remains queued with a `PausedReason`; a storage pause does not consume a retry attempt. Delete unwanted episodes, allow expiry, or adjust limits to resume processing.
+
+If YouTube challenges the server's network for a public video, an existing HTTP(S) outbound proxy can be configured with `TWOPOD_EXTRACTOR_PROXY`. For example, `http://proxy.example:3128` is a placeholder for an operator-owned proxy. Leave the setting empty for the normal route. The proxy must be reachable from the container. A configured proxy becomes an extraction availability dependency; it does not change where RSS/media are hosted or route Telegram through that proxy. Proxy URLs, including optional credentials, stay in the protected environment file and extraction child environment rather than command arguments or diagnostics. The application does not install a proxy or import browser cookies.
 
 Leave both Telegram fields empty to operate entirely through the CLI. To enable phone submissions, create a bot through Telegram's BotFather, store its token privately, and set your positive numeric user ID. Both values are required together; partial or invalid settings refuse startup. The bot uses outbound polling; it needs no inbound webhook or management HTTP port. Only a private chat from the configured identity can submit links; other senders and group chats are ignored.
 
@@ -134,7 +137,7 @@ Recheck the subscription and media after restoration. Use the same Compose proje
 ## Troubleshooting
 
 - **Submission failed:** run `2pod status VIDEO_ID` through Compose to see the sanitized reason and attempts. Check whether the video is public/unlisted, not a livestream, and available from the server's network. Login-dependent, removed, age-restricted or region-blocked content may be unavailable without being an application failure.
-- **Provider/extraction errors:** check packaged versions above, DNS/connectivity, and yt-dlp's current upstream reports. Rebuild with a verified current release when required, then use `docker compose exec -T 2pod 2pod retry VIDEO_ID`. Do not repeatedly retry an unchanged provider block or introduce cookies/proxies without reviewing the scope.
+- **Provider/extraction errors:** check packaged versions above, DNS/connectivity, and yt-dlp's current upstream reports. Rebuild with a verified current release when required, then use `docker compose exec -T 2pod 2pod retry VIDEO_ID`. A fixed bot-challenge diagnostic means YouTube blocked automated access for that source from the chosen network. Check an existing extraction proxy's reachability if one is configured, or configure an operator-owned proxy after reviewing its availability dependency. Do not repeatedly retry an unchanged provider block or import browser cookies without reviewing the scope.
 - **Queue paused for storage:** inspect `2pod status`, remove unwanted episodes with `delete`, increase the budget/reserve only if disk capacity permits, or wait for expiry. Preserve unexpired episodes; do not manually delete files behind SQLite's back.
 - **Player cannot refresh:** confirm the player can reach the base URL, trusts its HTTPS certificate, and uses the current secret feed URL. For private Tailscale hosting, connect the fetching device to the tailnet. Publication means available at the service; the player's polling/cache timing is separate.
 - **Service does not start:** use `docker compose logs --tail 100 2pod` and check settings/state permissions. Normal diagnostics sanitize credentials; inspect logs privately before sharing excerpts.
