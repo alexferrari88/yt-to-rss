@@ -35,6 +35,8 @@ Leave both Telegram fields empty to operate entirely through the CLI. To enable 
 
 Send `/start` or `/help` to see instructions, then send one YouTube URL per message (surrounding title text is allowed). The bot acknowledges only after the submission is stored, then replies when it is published or reaches a final failure. `/status VIDEO_ID` inspects a submission. Pending replies survive service restarts.
 
+After a final bot failure, a CLI retry does not reattach the bot's publication notification. Resend the link to the bot or use `/status VIDEO_ID` to check the retried submission. Resending an already published source returns its status without adding another episode.
+
 The optional setup helper verifies the bot identity and derives your user ID from a fresh private `/start` message. Create the bot in BotFather first, then run these commands in an interactive terminal:
 
 ```sh

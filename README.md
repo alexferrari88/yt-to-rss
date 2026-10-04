@@ -35,6 +35,8 @@ Commands return JSON for scripting; `feed-url` prints the subscription URL. Trea
 
 Subscribe to the returned URL in a player that can reach your chosen hosting network. A private Tailscale installation requires the fetching device to be connected to that tailnet. AntennaPod fetches feeds on the phone; a player that fetches through its own servers may not reach a private feed. The feed uses ordinary RSS 2.0 and MP3 enclosures.
 
+An optional HTTP(S) extraction proxy can help when YouTube blocks the server's network. Set `TWOPOD_EXTRACTOR_PROXY` in your protected `.env`, then recreate the container. For example, `http://proxy.example:3128` is a placeholder for your own reachable proxy. Leave the setting empty to use the normal route. It applies only to extraction; Telegram and feed/media hosting keep their existing routes. See [configuration](docs/operations.md#configuration) for details.
+
 See [operations](docs/operations.md) for settings, optional Telegram setup, persistent-state backup, updates, rollback, and troubleshooting. Private videos, login-dependent content, active livestreams, playlist imports, and trimming are outside the supported scope. Shared start timestamps and playlist parameters on an individual video are ignored.
 
 ## Development

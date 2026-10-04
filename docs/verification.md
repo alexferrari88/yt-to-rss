@@ -1,7 +1,7 @@
 # Verification
 
-Validated on Linux amd64, 2026-10-04. Application image source revision:
-`2ae45c8880b3ee81fd7b055f069f496917ee14a0`. Later documentation commits record the results; they do not change the running application code.
+Validated on Linux amd64, 2026-10-04. Current application image source revision:
+`e391521eadf5832ea9cd8e7a0d32fef98cd3c3f5` (image label `e391521`). Initial installation checks below used `2ae45c8880b3ee81fd7b055f069f496917ee14a0`; the proxy follow-up has separate automated, package and live evidence. Later documentation commits do not change the application code.
 
 ## Automated application acceptance
 
@@ -54,11 +54,23 @@ The new public, non-live source (3,661 seconds) failed all three direct extracti
 
 Changing only the extraction route to the operator's existing residential proxy made the same source available. A complete isolated conversion using the packaged tools and child-only proxy environment produced a 40,237,820-byte MP3 in 63.33 seconds; decoded duration was 3,660.504 seconds, consistent with rounded source metadata. Independent full decoding passed. The isolated container published no port and was removed afterwards. No browser cookies or login credentials were used.
 
-The optional `TWOPOD_EXTRACTOR_PROXY` setting and fixed sanitized bot-challenge diagnostic passed the complete daemon/test race suite in 17.205 seconds, `go vet ./...`, independent standards/spec reviews (zero findings in either axis), and rebuilt-container replacement/backup/restore acceptance. The setting defaults empty; enabling it adds proxy availability as a dependency of extraction. The personal deployment's production extraction route remains direct pending the operator's Beelink availability preference. This complete tool probe does not establish successful publication/replies from the final configured application.
+The optional `TWOPOD_EXTRACTOR_PROXY` setting and fixed sanitized bot-challenge diagnostic passed the complete daemon/test race suite in 17.205 seconds, `go vet ./...`, independent standards/spec reviews (zero findings in either axis), and rebuilt-container replacement/backup/restore acceptance. The setting defaults empty; enabling it adds proxy availability as a dependency of extraction.
+
+The operator explicitly approved the existing proxy and requested configurable support for other installations. Its value was saved only in the personal protected environment file. A complete stopped-state/settings backup was saved outside both repositories; the prior source revision was rebuilt and retained as a rollback image because Docker no longer retained the old running image. Only 2pod was recreated with the reviewed proxy-enabled image. Its generated subscription URL, submissions, prior published audio, dedicated Telegram settings and every existing Serve route were preserved. Host port bindings remain empty, Traefik remains loopback-bound, port 443 remains tailnet-bound, and the selected DNS record still resolves to the tailnet address.
+
+The actual Go application's CLI retry of the failed bot submission published on its first attempt after the routing change, in 57.03 seconds. Its RSS metadata, stable GUID and full enclosure were verified through the trusted private HTTPS hostname. Downloaded audio was 40,237,820 bytes with SHA-256 `8303d7e146ed173ed40702ebccd3c28d4c826e51305cbbf03fbdae56265b4a2e`; independent frame counting measured 3,660.504 seconds and full FFmpeg decoding passed. Media HEAD and exact 206 range bytes passed; wrong feed/media credentials returned 404. This verifies the configured application and its publication path, separately from the earlier isolated tool probe.
+
+| Measurement during the configured application retry | Observed | Scope |
+| --- | ---: | --- |
+| Idle Go process with Telegram polling | 16.7 MiB | Host `/proc` VmRSS immediately before the retry. |
+| Go process after publication | 24.6 MiB | Same process immediately after publication. |
+| Peak container during retry | 236.9 MiB | Reset owned cgroup v2 `memory.peak`; includes the daemon, extraction tools, CLI sampling and charged filesystem page cache. |
+
+The 512 MiB ceiling was retained. These measurements describe this workload and measurement window. Phone reply receipt remains unverified: a CLI retry after a final bot failure does not reattach its publication notification. Resharing the published source through the bot returns its status without creating a duplicate episode.
 
 ## Remaining live acceptance
 
-- Dedicated Telegram configuration was saved through the protected helper and activated by recreating only this service. Official identity/webhook checks passed; the container is healthy and retained its generated read URL and published episode. A new real bot submission was durably accepted and exhausted three extraction attempts because YouTube challenged this server for that source. Operator confirmation of actual replies remains pending; configured identity and server acceptance do not establish delivery to the phone.
+- Dedicated Telegram configuration was saved through the protected helper and activated by recreating only this service. Official identity/webhook checks passed. A new real bot submission was durably accepted, exhausted three direct extraction attempts, then published through the configured application after the authorized proxy change and CLI retry. Operator confirmation of actual queued/failure/publication replies remains pending; configured identity, server acceptance and publication do not establish delivery to the phone.
 - Android/AntennaPod subscription, refresh, download, playback and seeking require operator/device confirmation with Tailscale connected. The feed is standard and player-independent.
 - A negative request with a valid read URL from an independent outside-tailnet network remains untested. Current DNS/listener/Serve evidence verifies private configuration; successful on-server tailnet HTTP checks do not establish this external result. On the phone, verify fresh retrieval fails with Tailscale disconnected and succeeds when connected; cached/downloaded audio is not a network test.
 
