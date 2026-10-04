@@ -40,3 +40,27 @@ acceptance does not establish real Telegram delivery or Android playback.
 Initial findings: Standards 2 (worst P2), Spec 1 (worst P2). All three code
 findings are addressed; final test and deployment evidence is recorded in
 [verification](verification.md).
+
+## Extraction proxy follow-up
+
+The focused change `e391521` was reviewed independently against verified
+release `4fa769e7fb01c2da23b3442e75847d98f9e191fa` using
+`git diff 4fa769e7fb01c2da23b3442e75847d98f9e191fa...HEAD`.
+
+### Standards
+
+No documented-standard violations or meaningful baseline smells were found.
+The setting defaults empty, validates with credential-free errors and changes
+only extraction child environments. Stderr capture is bounded and the diagnosis
+uses fixed text. Public-boundary tests cover direct/configured routes,
+conflicting inherited settings, malformed configuration and credential omission.
+
+### Spec
+
+No confirmed findings were reported. The manually configured optional setting
+respects the spec's exclusion of automatic proxy/cookie/account management.
+Bounded retries, private hosting and local management remain intact. Actual
+proxy activation and device/reply checks remain separate live requirements.
+
+Findings: Standards 0; Spec 0. The full daemon/test race suite passed after this
+change in 17.205 seconds, and `go vet ./...` passed.
