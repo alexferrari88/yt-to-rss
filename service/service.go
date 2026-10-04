@@ -544,9 +544,9 @@ func (s *Service) extract(ctx context.Context, v Submission) {
 		s.finishFailure(v, "Extractor did not produce completed MP3 audio; check dependencies.")
 		return
 	}
-	actualDuration, err := s.probeMP3(processCtx, audio, token)
+	actualDuration, err := s.probeMP3(processCtx, audio, token, meta.Duration)
 	if err != nil {
-		s.finishFailure(v, "Completed audio is not a playable MP3; check FFmpeg/ffprobe and retry.")
+		s.finishFailure(v, "Completed audio is not a complete playable MP3; check FFmpeg/ffprobe and retry.")
 		return
 	}
 	if meta.Duration <= 0 {

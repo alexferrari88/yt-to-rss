@@ -20,17 +20,16 @@ Implement, verify, privately deploy and publish the approved service. The user i
 
 - AntennaPod's official docs establish direct feed fetching; phone playback is untested.
 - Existing private Traefik/DNS/TLS convention is reusable. Extraction prerequisites exist, but a current yt-dlp must be tested and RAM measured.
-- Git is initialized on main with the confirmed planning baseline committed. Application and packaging work are in progress; no service or DNS mutation has occurred yet.
-- Read-only checks confirm Go/Rust toolchains are installed and Go's standard library covers HTTP media, XML, and subprocess needs. Candidate names currently do not resolve; check Cloudflare records before creating the chosen one. No Go/Rust RAM comparison has been measured.
-- A/AAAA/CNAME queries for the selected 2pod.thealexferrari.com return NXDOMAIN. Exact Cloudflare-zone state still needs checking before any record mutation.
+- Git is initialized on main with the confirmed planning baseline 7c66bfa and implementation snapshot eb9291e committed. Independent code review is complete; two validated P2 fixes are resolved and the final application gates pass.
 - Canonical implementation spec: .scratch/initial-service/spec.md, Status: ready-for-agent. It contains 44 user stories, implementation/testing decisions, accepted scope, and separate live acceptance requirements.
 - Six tickets are published under .scratch/initial-service/issues/, all ready-for-agent, with acceptance criteria and the approved blockers. The parent spec remains unchanged.
-- Current read-only deployment checks confirm the chosen Cloudflare record is absent, rootless Docker and private proxy/Serve routes are available, and the GitHub repository does not yet exist. Preserve unrelated dirty work in the services checkout.
+- Rootless Docker and private proxy/Serve routes are available; the GitHub repository does not yet exist. Preserve unrelated dirty work in the services checkout.
 - Current nightly yt-dlp/EJS/Deno successfully extracted the complete 213-second official public Rick Astley video without cookies or a proxy; decoded MP3 verification passed. The earlier short source failed with a source-specific provider bot check. Application/container extraction and processing-memory measurements remain to be verified.
 - Dedicated Telegram credentials/operator configuration are absent. A setup preference question is pending; tokens must be entered into protected server configuration, not chat. Android playback remains a required operator/device check.
 - Application implementation is stable: 14 core CLI/HTTP tests and four Telegram boundary tests pass; typechecking/vet passes. Packaged CLI/HTTP, container replacement and stopped-volume backup/restore checks passed using a controlled external extractor fixture. Linux-specific process/file limits and possible brief aggregate-budget overshoot are documented.
 - Created the approved DNS-only A record for 2pod.thealexferrari.com to the Tailscale address. Prepared /opt/services/yt-to-rss private Compose/runbook and scoped inventory commands; Compose validates, protected .env is ignored, no container or public listener activated yet. Unrelated services WIP is preserved.
 - Secure setup helper is ready: scripts/configure-telegram.py accepts a hidden token and nonce private-message identity check into /opt/services/yt-to-rss/.env. The operator has been asked to run it and reply ready; continue independent work meanwhile.
+- Independent standards/spec review findings are resolved: inherited application settings are stripped from tests, decoded MP3 completeness is validated, and availability logic is shared. The full suite passed in 54.967s with both daemon and tests race-instrumented; go vet ./... passed. Core/Telegram/resource tickets 01–04 are resolved; live bot acceptance remains in ticket 06.
 
 ## Approved tickets
 
@@ -43,4 +42,4 @@ Implement, verify, privately deploy and publish the approved service. The user i
 
 ## Next action
 
-Freeze the completed application/package for two-axis code review from baseline 7c66bfa, fix validated findings and run the full acceptance suite. Build the reviewed revision, activate only the new private service, measure real processing and publish the source repository. Telegram setup and Android playback remain explicit operator-dependent acceptance; continue all independently possible work meanwhile.
+Build the reviewed revision and repeat package replacement/backup/restore acceptance. Activate only the new private service, measure real processing and publish the source repository. Telegram setup and Android playback remain explicit operator-dependent acceptance; continue all independently possible work meanwhile.

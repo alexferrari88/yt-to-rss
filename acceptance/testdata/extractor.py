@@ -29,4 +29,6 @@ if mode=='grow':
 shutil.copyfile(os.environ['FIXTURE_MP3'],target)
 if mode=='corrupt':
     target.write_bytes(b'this is not playable MP3 audio')
-target.with_suffix('.info.json').write_text(json.dumps({'title':'An <old> video & audio','uploader':'Fixture Creator','duration':0 if mode=='unknown' else 1,'is_live':mode=='live','availability':'private' if mode=='private' else 'public','upload_date':'20100101'}))
+if mode=='partial':
+    target.write_bytes(target.read_bytes()[:2255])
+target.with_suffix('.info.json').write_text(json.dumps({'title':'An <old> video & audio','uploader':'Fixture Creator','duration':0 if mode=='unknown' else (31 if mode=='wrongduration' else 1),'is_live':mode=='live','availability':'private' if mode=='private' else 'public','upload_date':'20100101'}))

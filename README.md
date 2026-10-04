@@ -39,7 +39,7 @@ See [operations](docs/operations.md) for settings, optional Telegram setup, pers
 
 ## Development
 
-Requires Go, a C compiler for SQLite, and FFmpeg with `ffmpeg` and `ffprobe` available on `PATH`. Ordinary Go tests use a real MP3 fixture and probe its codec and duration before publication. They replace external extraction/Telegram traffic at their integration boundaries and do not require live YouTube access.
+Requires Go, a C compiler for SQLite, Python 3 for the controlled extractor fixture, and FFmpeg with `ffmpeg` and `ffprobe` available on `PATH`. Ordinary Go tests use a real MP3 fixture and verify its audio before publication. They replace external extraction/Telegram traffic at their integration boundaries and do not require live YouTube access.
 
 ```sh
 go test ./...

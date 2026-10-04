@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -47,7 +48,7 @@ func childCommand(ctx context.Context, executable, token string, args ...string)
 	cmd.WaitDelay = 2 * time.Second
 	return cmd
 }
-func (s *Service) probeMP3(ctx context.Context, path, token string) (float64, error) {
+func (s *Service) probeMP3(ctx context.Context, path, token string, sourceDuration float64) (float64, error) {
 	executable := "ffprobe"
 	if s.cfg.FFmpegLocation != "" {
 		info, err := os.Stat(s.cfg.FFmpegLocation)
@@ -60,7 +61,7 @@ func (s *Service) probeMP3(ctx context.Context, path, token string) (float64, er
 		}
 		executable = filepath.Join(dir, "ffprobe")
 	}
-	cmd := childCommand(ctx, executable, token, "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name:format=duration", "-of", "json", path)
+	cmd := childCommand(ctx, executable, token, "-v", "error", "-count_frames", "-select_streams", "a:0", "-show_entries", "stream=codec_name,sample_rate,nb_read_frames:format=duration", "-of", "json", path)
 	output := &cappedBuffer{limit: 8192}
 	cmd.Stdout = output
 	if err := cmd.Run(); err != nil {
@@ -68,7 +69,9 @@ func (s *Service) probeMP3(ctx context.Context, path, token string) (float64, er
 	}
 	var result struct {
 		Streams []struct {
-			Codec string `json:"codec_name"`
+			Codec      string `json:"codec_name"`
+			SampleRate string `json:"sample_rate"`
+			Frames     string `json:"nb_read_frames"`
 		} `json:"streams"`
 		Format struct {
 			Duration string `json:"duration"`
@@ -78,10 +81,42 @@ func (s *Service) probeMP3(ctx context.Context, path, token string) (float64, er
 		return 0, fmt.Errorf("completed audio is not MP3")
 	}
 	duration, err := strconv.ParseFloat(result.Format.Duration, 64)
-	if err != nil || duration <= 0 {
+	if err != nil || duration <= 0 || math.IsNaN(duration) || math.IsInf(duration, 0) {
 		return 0, fmt.Errorf("completed MP3 has no playable duration")
 	}
-	return duration, nil
+	stream := result.Streams[0]
+	sampleRate, err := strconv.Atoi(stream.SampleRate)
+	if err != nil {
+		return 0, fmt.Errorf("MP3 sample rate unavailable")
+	}
+	frames, err := strconv.ParseInt(stream.Frames, 10, 64)
+	if err != nil || frames <= 0 {
+		return 0, fmt.Errorf("MP3 has no decoded frames")
+	}
+	// MPEG-1 Layer III has 1152 samples per frame; MPEG-2/2.5 has 576.
+	// ffprobe decodes the whole file while retaining only aggregate counters.
+	samplesPerFrame := 576
+	switch sampleRate {
+	case 32000, 44100, 48000:
+		samplesPerFrame = 1152
+	case 8000, 11025, 12000, 16000, 22050, 24000:
+	default:
+		return 0, fmt.Errorf("MP3 sample rate unsupported")
+	}
+	frameDuration := float64(samplesPerFrame) / float64(sampleRate)
+	decodedDuration := float64(frames) * frameDuration
+	// Permit a Xing header frame, final codec padding, and decimal rounding.
+	// This allowance stays tied to the codec rather than video length.
+	codecAllowance := 2*frameDuration + 0.001
+	if math.Abs(decodedDuration-duration) > codecAllowance {
+		return 0, fmt.Errorf("MP3 decoded frames disagree with its declared duration")
+	}
+	// YouTube commonly reports whole seconds. Allow that rounding plus codec
+	// padding, while rejecting substantial loss even when an MP3 header agrees.
+	if sourceDuration > 0 && math.Abs(decodedDuration-sourceDuration) > 1+codecAllowance {
+		return 0, fmt.Errorf("MP3 decoded duration disagrees with the source duration")
+	}
+	return decodedDuration, nil
 }
 
 // ExecExtractor is the binary's internal child entry point. Its file-size limit

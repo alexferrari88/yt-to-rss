@@ -92,6 +92,10 @@ type item struct {
 	Enclosure   enclosure `xml:"enclosure"`
 }
 
+func (s *Service) episodeAvailable(v Submission, now time.Time) bool {
+	return v.State == "published" && v.PublishedAt != nil && v.PublishedAt.Add(s.cfg.Retention).After(now)
+}
+
 func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		http.NotFound(w, r)
@@ -112,7 +116,7 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimSuffix(parts[2], ".mp3")
 		s.mu.Lock()
 		v, err := s.status(r.Context(), id)
-		if err != nil || v.State != "published" || !v.PublishedAt.Add(s.cfg.Retention).After(time.Now()) {
+		if err != nil || !s.episodeAvailable(v, time.Now()) {
 			s.mu.Unlock()
 			http.NotFound(w, r)
 			return
@@ -142,8 +146,9 @@ func (s *Service) feed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	doc := rss{Version: "2.0", ITunes: "http://www.itunes.com/dtds/podcast-1.0.dtd", Channel: channel{Title: s.cfg.FeedTitle, Description: s.cfg.FeedDescription, Link: s.cfg.FeedLink}}
+	now := time.Now()
 	for _, v := range submissions {
-		if v.State != "published" || !v.PublishedAt.Add(s.cfg.Retention).After(time.Now()) {
+		if !s.episodeAvailable(v, now) {
 			continue
 		}
 		doc.Channel.Items = append(doc.Channel.Items, item{Title: v.Title, Description: fmt.Sprintf("%s\nSource: %s", v.Uploader, v.SourceURL), Link: v.SourceURL, GUID: guid{Value: "youtube:" + v.ID, IsPermaLink: "false"}, PubDate: v.PublishedAt.Format(time.RFC1123Z), Author: v.Uploader, Duration: fmt.Sprintf("%.0f", v.Duration), Enclosure: enclosure{URL: s.cfg.BaseURL + "/" + s.cfg.ReadToken + "/media/" + v.ID + ".mp3", Length: v.Bytes, Type: "audio/mpeg"}})

@@ -92,7 +92,12 @@ func newHarness(t *testing.T, settings ...string) *harness {
 		t.Fatal(err)
 	}
 	h := &harness{t: t, dir: dir, base: "http://" + addr}
-	h.env = append(os.Environ(), "TWOPOD_STATE_DIR="+filepath.Join(dir, "state"), "TWOPOD_LISTEN="+addr, "TWOPOD_BASE_URL="+h.base, "TWOPOD_READ_TOKEN="+strings.Repeat("s", 40), "TWOPOD_EXTRACTOR="+script, "TWOPOD_POLL_INTERVAL=20ms", "TWOPOD_RETRY_DELAY=40ms", "TWOPOD_MIN_FREE_BYTES=0", "FIXTURE_MP3="+fixture, "FIXTURE_CONTROL="+dir)
+	for _, setting := range os.Environ() {
+		if !strings.HasPrefix(setting, "TWOPOD_") {
+			h.env = append(h.env, setting)
+		}
+	}
+	h.env = append(h.env, "TWOPOD_STATE_DIR="+filepath.Join(dir, "state"), "TWOPOD_LISTEN="+addr, "TWOPOD_BASE_URL="+h.base, "TWOPOD_READ_TOKEN="+strings.Repeat("s", 40), "TWOPOD_EXTRACTOR="+script, "TWOPOD_POLL_INTERVAL=20ms", "TWOPOD_RETRY_DELAY=40ms", "TWOPOD_MIN_FREE_BYTES=0", "FIXTURE_MP3="+fixture, "FIXTURE_CONTROL="+dir)
 	h.env = append(h.env, settings...)
 	h.start()
 	t.Cleanup(h.stop)
@@ -746,4 +751,40 @@ func TestCleanRestartDoesNotSpendOnlyExtractionAttempt(t *testing.T) {
 	if s.Attempts != 1 {
 		t.Fatalf("restart spent interrupted attempt: %+v", s)
 	}
+}
+
+func TestApplicationAcceptanceIgnoresInheritedOperatorSettings(t *testing.T) {
+	t.Setenv("TWOPOD_TELEGRAM_BOT_TOKEN", "production-token-placeholder")
+	t.Setenv("TWOPOD_TELEGRAM_OPERATOR_ID", "invalid")
+	t.Setenv("TWOPOD_TELEGRAM_API_URL", "https://invalid.example.invalid")
+	t.Setenv("TWOPOD_RETENTION", "invalid")
+	h := newHarness(t)
+	s := h.add("https://youtu.be/abcdefghijk")
+	h.wait(s.ID, "published")
+}
+
+func TestPartialMP3SuccessNeverPublishes(t *testing.T) {
+	h := newHarness(t, "TWOPOD_MAX_ATTEMPTS=1")
+	for _, example := range []struct{ id, mode string }{{"abcdefghijk", "partial"}, {"lmnopqrstuv", "wrongduration"}} {
+		os.WriteFile(filepath.Join(h.dir, "mode-"+example.id), []byte(example.mode), 0600)
+		s := h.add("https://youtu.be/" + example.id)
+		s = h.wait(s.ID, "failed")
+		if !strings.Contains(s.Failure, "complete") {
+			t.Fatalf("incomplete audio failure unclear: %+v", s)
+		}
+		rss, _ := h.feed()
+		if len(rss.Channel.Items) != 0 {
+			t.Fatal("partial MP3 entered feed")
+		}
+		r, err := http.Get(h.base + "/" + strings.Repeat("s", 40) + "/media/" + s.ID + ".mp3")
+		if err != nil {
+			t.Fatal(err)
+		}
+		r.Body.Close()
+		if r.StatusCode != 404 {
+			t.Fatal("partial MP3 offered through media endpoint")
+		}
+	}
+	full := h.add("https://youtu.be/zyxwvutsrqp")
+	h.wait(full.ID, "published")
 }
